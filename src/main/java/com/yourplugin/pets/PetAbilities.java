@@ -1,6 +1,5 @@
 package com.yourplugin.pets;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -51,7 +50,6 @@ public class PetAbilities implements Listener {
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
             if (slot < 27) {
-                // Allow putting items in slots 11, 12, 14, 15 and clicking confirm button at 22
                 if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
                     event.setCancelled(true);
                 } else if (slot == 22) {
@@ -72,12 +70,10 @@ public class PetAbilities implements Listener {
                 if (name.contains("Pet")) {
                     Player player = event.getPlayer();
                     
-                    // If player already has an active pet, return it first
                     if (activePetItems.containsKey(player.getUniqueId())) {
                         player.getInventory().addItem(activePetItems.get(player.getUniqueId()));
                     }
 
-                    // Store pet and remove from inventory hand
                     activePets.put(player.getUniqueId(), name);
                     activePetItems.put(player.getUniqueId(), item.clone());
                     
