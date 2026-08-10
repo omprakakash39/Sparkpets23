@@ -1,0 +1,4 @@
+messages:
+  prefix: "&6[Pets] &7"
+  equipped: "&aSuccessfully equipped {pet}!"
+  fusion-success: "&eYou have successfully fused your pets!"
