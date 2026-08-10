@@ -32,35 +32,37 @@ public class PetAbilities implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
         if (title.contains("Pets")) {
-            if (event.getRawSlot() < 54) {
-                event.setCancelled(true);
-                if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
+            event.setCancelled(true);
+            if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
 
-                Player player = (Player) event.getWhoClicked();
-                String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
+            Player player = (Player) event.getWhoClicked();
+            String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
 
-                if (itemName.contains("Next Page")) {
-                    if (title.contains("(1/3)")) PetGui.openPetsMenu(player, 2);
-                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 3);
-                } else if (itemName.contains("Previous Page")) {
-                    if (title.contains("(3/3)")) PetGui.openPetsMenu(player, 2);
-                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 1);
-                } else if (itemName.contains("Pet Fusion")) {
-                    PetGui.openFusionMenu(player);
-                } else if (itemName.contains("Pet Egg")) {
-                    player.getInventory().addItem(event.getCurrentItem().clone());
-                    player.sendMessage(ChatColor.GREEN + "Claimed pet egg!");
-                }
+            if (itemName.contains("Next Page")) {
+                if (title.contains("(1/3)")) PetGui.openPetsMenu(player, 2);
+                else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 3);
+            } else if (itemName.contains("Previous Page")) {
+                if (title.contains("(3/3)")) PetGui.openPetsMenu(player, 2);
+                else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 1);
+            } else if (itemName.contains("Pet Fusion")) {
+                PetGui.openFusionMenu(player);
+            } else if (itemName.contains("Pet Egg")) {
+                player.getInventory().addItem(event.getCurrentItem().clone());
+                player.sendMessage(ChatColor.GREEN + "Claimed pet egg!");
             }
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
-            if (slot < 27) {
+            if (slot >= 0 && slot < 27) {
                 if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
                     event.setCancelled(true);
                 } else if (slot == 22) {
                     event.setCancelled(true);
                     event.getWhoClicked().sendMessage(ChatColor.YELLOW + "Fusion completed successfully!");
                     event.getWhoClicked().closeInventory();
+                }
+            } else {
+                if (event.isShiftClick()) {
+                    event.setCancelled(true);
                 }
             }
         }
@@ -83,18 +85,19 @@ public class PetAbilities implements Listener {
                     else if (name.contains("Epic")) rarity = "Epic";
                     else if (name.contains("Shiny")) rarity = "Shiny";
 
-                    String[] petTypes = {"Wolf", "Golem", "Villager", "Witch"};
+                    String[] petTypes = {"Wolf", "Golem", "Villager", "Witch", "Dragon", "Blaze", "Enderman", "Zombie", "Totem", "Guardian", "Banker", "Skeleton"};
                     String randomType = petTypes[random.nextInt(petTypes.length)];
 
                     ItemStack petHead = PetGui.createPetHead(randomType, rarity);
                     player.getInventory().addItem(petHead);
 
-                    playNoteTune(player);
+                    // Normal "ting" sound (Pling)
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
                     player.sendMessage(ChatColor.GREEN + "You hatched a " + rarity + " " + randomType + " Pet!");
                     return;
                 }
 
-                if (clickedItem.getType() == org.bukkit.Material.PLAYER_HEAD) {
+                if (clickedItem.getType() == Material.PLAYER_HEAD) {
                     event.setCancelled(true);
 
                     if (activePetItems.containsKey(player.getUniqueId())) {
@@ -111,12 +114,6 @@ public class PetAbilities implements Listener {
                 }
             }
         }
-    }
-
-    private void playNoteTune(Player player) {
-        Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.0f), 0L);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.2f), 3L);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.5f), 6L);
     }
 
     public static void deactivatePet(Player player) {
@@ -137,21 +134,29 @@ public class PetAbilities implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player attacker) {
             String pet = activePets.get(attacker.getUniqueId());
-            if (pet != null && pet.contains("Attack Boost")) {
-                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 1.20);
-                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 1.15);
-                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 1.10);
-                else event.setDamage(event.getDamage() * 1.05);
+            if (pet != null) {
+                double multiplier = 1.05;
+                if (pet.contains("Shiny")) multiplier = 1.20;
+                else if (pet.contains("Epic")) multiplier = 1.15;
+                else if (pet.contains("Rare")) multiplier = 1.10;
+
+                if (pet.contains("Wolf") || pet.contains("Dragon") || pet.contains("Skeleton")) {
+                    event.setDamage(event.getDamage() * multiplier);
+                }
             }
         }
 
         if (event.getEntity() instanceof Player victim) {
             String pet = activePets.get(victim.getUniqueId());
-            if (pet != null && pet.contains("Damage Reduction")) {
-                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 0.80);
-                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 0.85);
-                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 0.90);
-                else event.setDamage(event.getDamage() * 0.95);
+            if (pet != null) {
+                double reductionMultiplier = 0.95;
+                if (pet.contains("Shiny")) reductionMultiplier = 0.80;
+                else if (pet.contains("Epic")) reductionMultiplier = 0.85;
+                else if (pet.contains("Rare")) reductionMultiplier = 0.90;
+
+                if (pet.contains("Golem") || pet.contains("Enderman")) {
+                    event.setDamage(event.getDamage() * reductionMultiplier);
+                }
             }
         }
     }
