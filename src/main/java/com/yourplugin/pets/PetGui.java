@@ -105,16 +105,18 @@ public class PetGui {
         }
         for(int i=0; i<27; i++) inv.setItem(i, pane);
 
+        // Clear the 4 interactive fusion slots (11, 12, 14, 15)
         inv.setItem(11, null);
         inv.setItem(12, null);
         inv.setItem(14, null);
         inv.setItem(15, null);
-        inv.setItem(22, createGuiItem(Material.EMERALD_BLOCK, ChatColor.GREEN + "Click to Fuse Pets!"));
+        
+        // Confirm Button at slot 22
+        inv.setItem(22, createGuiItem(Material.EMERALD_BLOCK, ChatColor.GREEN + "Confirm Fusion"));
 
         p.openInventory(inv);
     }
 
-    // MAKE SURE THIS IS PUBLIC STATIC
     public static ItemStack createCustomPetItem(String type, String rarity) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = item.getItemMeta();
@@ -167,4 +169,4 @@ public class PetGui {
         }
         return item;
     }
-                }
+}
