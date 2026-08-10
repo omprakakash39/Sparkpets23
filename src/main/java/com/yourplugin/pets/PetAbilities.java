@@ -10,10 +10,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
@@ -31,11 +35,12 @@ public class PetAbilities implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
+        Player player = (Player) event.getWhoClicked();
+
         if (title.contains("Pets")) {
             event.setCancelled(true);
             if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
 
-            Player player = (Player) event.getWhoClicked();
             String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
 
             if (itemName.contains("Next Page")) {
@@ -52,20 +57,152 @@ public class PetAbilities implements Listener {
             }
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
-            if (slot >= 0 && slot < 27) {
-                if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
-                    event.setCancelled(true);
-                } else if (slot == 22) {
-                    event.setCancelled(true);
-                    event.getWhoClicked().sendMessage(ChatColor.YELLOW + "Fusion completed successfully!");
-                    event.getWhoClicked().closeInventory();
-                }
+            
+            // If clicking inside the player's own inventory while fusion menu is open
+            if (slot >= 36) {
+                return; // Allow normal inventory interaction below
+            }
+
+            // Allowed ingredient slots: 10 to 16
+            if (slot >= 10 && slot <= 16) {
+                return; // Allow placing/taking pets in input slots
+            }
+
+            // Confirm Fusion button slot (31)
+            if (slot == 31) {
+                event.setCancelled(true);
+                processFusion(player, event.getInventory());
+                return;
+            }
+
+            // Block everything else in the GUI (borders, panes, etc.)
+            event.setCancelled(true);
+        }
+    }
+
+    private void processFusion(Player player, Inventory inv) {
+        List<ItemStack> placedPets = new ArrayList<>();
+
+        // Collect all valid pet heads placed in slots 10 to 16
+        for (int slot = 10; slot <= 16; slot++) {
+            ItemStack item = inv.getItem(slot);
+            if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta()) {
+                placedPets.add(item);
+            }
+        }
+
+        if (placedPets.isEmpty()) {
+            player.sendMessage(ChatColor.RED + "Please place pets in the fusion slots first!");
+            return;
+        }
+
+        // Validate that all placed pets are of the EXACT same type and rarity
+        String firstType = null;
+        String firstRarity = null;
+
+        for (ItemStack pet : placedPets) {
+            String name = pet.getItemMeta().getDisplayName();
+            String type = getPetTypeFromDisplay(name);
+            String rarity = getPetRarityFromLore(pet);
+
+            if (type == null || rarity == null) {
+                returnItemsToPlayer(player, placedPets, inv);
+                player.sendMessage(ChatColor.RED + "Fusion Failed: Invalid items detected!");
+                return;
+            }
+
+            if (firstType == null) {
+                firstType = type;
+                firstRarity = rarity;
             } else {
-                if (event.isShiftClick()) {
-                    event.setCancelled(true);
+                if (!firstType.equalsIgnoreCase(type) || !firstRarity.equalsIgnoreCase(rarity)) {
+                    returnItemsToPlayer(player, placedPets, inv);
+                    player.sendMessage(ChatColor.RED + "Fusion Failed: All pets must be of the exact same type and rarity!");
+                    player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                    return;
                 }
             }
         }
+
+        int count = placedPets.size();
+        String targetRarity = null;
+
+        // Fusion Rules check:
+        // 4 Common -> 1 Rare
+        // 3 Rare -> 1 Epic
+        // 2 Epic -> 1 Shiny
+        if (firstRarity.equalsIgnoreCase("Common") && count == 4) {
+            targetRarity = "Rare";
+        } else if (firstRarity.equalsIgnoreCase("Rare") && count == 3) {
+            targetRarity = "Epic";
+        } else if (firstRarity.equalsIgnoreCase("Epic") && count == 2) {
+            targetRarity = "Shiny";
+        } else {
+            // Fusion failed due to wrong count/requirement mismatch
+            returnItemsToPlayer(player, placedPets, inv);
+            player.sendMessage(ChatColor.RED + "Fusion Failed! Incorrect amount of pets for " + firstRarity + " tier.");
+            player.sendMessage(ChatColor.YELLOW + "Required: 4 Common->Rare, 3 Rare->Epic, 2 Epic->Shiny.");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return;
+        }
+
+        // Clear ingredients from inventory slots so they aren't duplicated
+        for (int slot = 10; slot <= 16; slot++) {
+            inv.setItem(slot, null);
+        }
+
+        // Success: Give upgraded pet
+        ItemStack upgradedPet = PetGui.createPetHead(firstType, targetRarity);
+        player.getInventory().addItem(upgradedPet);
+        
+        player.closeInventory();
+        player.sendMessage(ChatColor.GREEN + "§lSUCCESS! §aSuccessfully fused pets into a " + targetRarity + " " + firstType + " Pet!");
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+    }
+
+    private void returnItemsToPlayer(Player player, List<ItemStack> pets, Inventory inv) {
+        for (int slot = 10; slot <= 16; slot++) {
+            inv.setItem(slot, null);
+        }
+        for (ItemStack pet : pets) {
+            player.getInventory().addItem(pet);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getView().getTitle().contains("Pet Fusion")) {
+            Player player = (Player) event.getPlayer();
+            Inventory inv = event.getInventory();
+            
+            // Return any remaining items in fusion slots back to player when they close GUI
+            for (int slot = 10; slot <= 16; slot++) {
+                ItemStack item = inv.getItem(slot);
+                if (item != null && item.getType() != Material.AIR) {
+                    player.getInventory().addItem(item);
+                    inv.setItem(slot, null);
+                }
+            }
+        }
+    }
+
+    private String getPetTypeFromDisplay(String displayName) {
+        String stripped = ChatColor.stripColor(displayName);
+        if (stripped != null && stripped.endsWith(" Pet")) {
+            return stripped.replace(" Pet", "").trim();
+        }
+        return null;
+    }
+
+    private String getPetRarityFromLore(ItemStack item) {
+        if (!item.hasItemMeta() || !item.getItemMeta().hasLore()) return null;
+        for (String line : item.getItemMeta().getLore()) {
+            String stripped = ChatColor.stripColor(line);
+            if (stripped != null && stripped.startsWith("Rarity: ")) {
+                return stripped.replace("Rarity: ", "").trim();
+            }
+        }
+        return "Common";
     }
 
     @EventHandler
@@ -91,7 +228,6 @@ public class PetAbilities implements Listener {
                     ItemStack petHead = PetGui.createPetHead(randomType, rarity);
                     player.getInventory().addItem(petHead);
 
-                    // Normal "ting" sound (Pling)
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
                     player.sendMessage(ChatColor.GREEN + "You hatched a " + rarity + " " + randomType + " Pet!");
                     return;
@@ -140,7 +276,7 @@ public class PetAbilities implements Listener {
                 else if (pet.contains("Epic")) multiplier = 1.15;
                 else if (pet.contains("Rare")) multiplier = 1.10;
 
-                if (pet.contains("Wolf") || pet.contains("Dragon") || pet.contains("Skeleton")) {
+                if (pet.contains("Wolf") || pet.contains("Dragon") || pet.contains("Skeleton") || pet.contains("Blaze")) {
                     event.setDamage(event.getDamage() * multiplier);
                 }
             }
@@ -154,11 +290,10 @@ public class PetAbilities implements Listener {
                 else if (pet.contains("Epic")) reductionMultiplier = 0.85;
                 else if (pet.contains("Rare")) reductionMultiplier = 0.90;
 
-                if (pet.contains("Golem") || pet.contains("Enderman")) {
+                if (pet.contains("Golem") || pet.contains("Enderman") || pet.contains("Guardian")) {
                     event.setDamage(event.getDamage() * reductionMultiplier);
                 }
             }
         }
     }
-}
-
+    }
