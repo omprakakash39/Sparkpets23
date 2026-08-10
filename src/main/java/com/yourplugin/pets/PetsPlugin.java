@@ -24,12 +24,17 @@ public final class PetsPlugin extends JavaPlugin {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (command.getName().equalsIgnoreCase("pets") || command.getName().equalsIgnoreCase("pet")) {
             if (sender instanceof Player player) {
-                if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-                    String petType = args[1];
-                    String rarity = args[2];
-                    player.getInventory().addItem(PetGui.createCustomPetItem(petType, rarity));
-                    player.sendMessage("§aGiven " + rarity + " " + petType + " Pet!");
-                    return true;
+                if (args.length > 0) {
+                    if (args[0].equalsIgnoreCase("give") && args.length >= 3) {
+                        String petType = args[1];
+                        String rarity = args[2];
+                        player.getInventory().addItem(PetGui.createCustomPetItem(petType, rarity));
+                        player.sendMessage("§aGiven " + rarity + " " + petType + " Pet!");
+                        return true;
+                    } else if (args[0].equalsIgnoreCase("deactivate")) {
+                        PetAbilities.deactivatePet(player);
+                        return true;
+                    }
                 }
                 PetGui.openPetsMenu(player, 1);
             } else {
