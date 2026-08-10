@@ -4,8 +4,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -22,29 +25,56 @@ public class PetAbilities implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
-        if (title.contains("Pets Menu")) {
-            event.setCancelled(true);
-            if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
+        if (title.contains("Pets")) {
+            // Only cancel if clicking inside the custom GUI menu slots, allow player inventory interaction safely
+            if (event.getRawSlot() < 54) {
+                event.setCancelled(true);
+                if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
 
-            Player player = (Player) event.getWhoClicked();
-            String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
+                Player player = (Player) event.getWhoClicked();
+                String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
 
-            int currentPage = 1;
-            if (title.contains("(2/3)")) currentPage = 2;
-            else if (title.contains("(3/3)")) currentPage = 3;
+                if (itemName.contains("Next Page")) {
+                    if (title.contains("(1/3)")) PetGui.openPetsMenu(player, 2);
+                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 3);
+                } else if (itemName.contains("Previous Page")) {
+                    if (title.contains("(3/3)")) PetGui.openPetsMenu(player, 2);
+                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 1);
+                } else if (itemName.contains("Pet Fusion")) {
+                    PetGui.openFusionMenu(player);
+                } else if (event.getCurrentItem().getType().name().contains("HEAD")) {
+                    // Give pet item to player inventory or equip
+                    player.getInventory().addItem(event.getCurrentItem());
+                    player.sendMessage(ChatColor.GREEN + "Claimed pet to your inventory!");
+                }
+            }
+        } else if (title.contains("Pet Fusion")) {
+            // Allow managing the 4 fusion slots (11, 12, 14, 15) and emerald button (22)
+            int slot = event.getRawSlot();
+            if (slot < 27) {
+                if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
+                    event.setCancelled(true);
+                } else if (slot == 22) {
+                    event.setCancelled(true);
+                    event.getWhoClicked().sendMessage(ChatColor.YELLOW + "Fusion process completed!");
+                    event.getWhoClicked().closeInventory();
+                }
+            }
+        }
+    }
 
-            if (itemName.contains("Next Page")) {
-                if (currentPage == 1) PetGui.openPetsMenu(player, 2);
-                else if (currentPage == 2) PetGui.openPetsMenu(player, 3);
-            } else if (itemName.contains("Previous Page")) {
-                if (currentPage == 3) PetGui.openPetsMenu(player, 2);
-                else if (currentPage == 2) PetGui.openPetsMenu(player, 1);
-            } else if (itemName.contains("Pet Fusion")) {
-                player.sendMessage(ChatColor.YELLOW + "Place matching pets together to fuse them!");
-            } else if (itemName.contains("Pet")) {
-                activePets.put(player.getUniqueId(), itemName);
-                player.sendMessage(ChatColor.GREEN + "Equipped: " + itemName);
-                player.closeInventory();
+    @EventHandler
+    public void onRightClick(PlayerInteractEvent event) {
+        if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            ItemStack item = event.getItem();
+            if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+                String name = item.getItemMeta().getDisplayName();
+                if (name.contains("Pet")) {
+                    Player player = event.getPlayer();
+                    activePets.put(player.getUniqueId(), name);
+                    player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
+                    event.setCancelled(true);
+                }
             }
         }
     }
@@ -54,9 +84,7 @@ public class PetAbilities implements Listener {
         if (event.getDamager() instanceof Player attacker) {
             String pet = activePets.get(attacker.getUniqueId());
             if (pet != null && pet.contains("Wolf")) {
-                if (pet.contains("SHINY")) event.setDamage(event.getDamage() * 1.20);
-                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 1.15);
-                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 1.10);
+                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 1.20);
                 else event.setDamage(event.getDamage() * 1.05);
             }
         }
@@ -64,11 +92,9 @@ public class PetAbilities implements Listener {
         if (event.getEntity() instanceof Player victim) {
             String pet = activePets.get(victim.getUniqueId());
             if (pet != null && pet.contains("Golem")) {
-                if (pet.contains("SHINY")) event.setDamage(event.getDamage() * 0.84);
-                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 0.88);
-                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 0.92);
+                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 0.84);
                 else event.setDamage(event.getDamage() * 0.96);
             }
         }
     }
-                    }
+}
