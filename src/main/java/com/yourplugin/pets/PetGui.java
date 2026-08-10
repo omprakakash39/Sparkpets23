@@ -138,26 +138,59 @@ public class PetGui {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            String baseName = switch (type.toLowerCase()) {
-                case "wolf" -> "Attack Boost";
-                case "golem" -> "Damage Reduction";
-                case "villager" -> "Trade Master";
-                case "witch" -> "Alchemist";
-                default -> type;
-            };
-
-            meta.setDisplayName(ChatColor.WHITE + baseName);
+            meta.setDisplayName(ChatColor.WHITE + type + " Pet");
+            
             int percentage = getAbilityPercentage(rarity);
+            String abilityName = getAbilityName(type);
+            String abilityDesc = getAbilityDescription(type, percentage);
 
             meta.setLore(List.of(
                 ChatColor.DARK_AQUA + "Rarity: " + getRarityColor(rarity) + rarity,
-                ChatColor.GRAY + "Power: " + percentage + "%"
+                "",
+                ChatColor.LIGHT_PURPLE + abilityName,
+                ChatColor.GRAY + abilityDesc
             ));
             
             meta.setMaxStackSize(1);
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static String getAbilityName(String type) {
+        return switch (type.toLowerCase()) {
+            case "wolf" -> "Attack Boost";
+            case "golem" -> "Damage Reduction";
+            case "villager" -> "Trade Master";
+            case "witch" -> "Alchemist";
+            case "dragon" -> "Fierce Wrath";
+            case "blaze" -> "Flame Aura";
+            case "enderman" -> "Teleport Reflex";
+            case "zombie" -> "Undead Resilience";
+            case "totem" -> "Undying Grace";
+            case "guardian" -> "Laser Thorns";
+            case "banker" -> "Coin Master";
+            case "skeleton" -> "Archery Focus";
+            default -> "Special Perk";
+        };
+    }
+
+    private static String getAbilityDescription(String type, int percentage) {
+        return switch (type.toLowerCase()) {
+            case "wolf" -> "Increases your attack damage by " + percentage + "%.";
+            case "golem" -> "Decreases your damage taken by " + percentage + "%.";
+            case "villager" -> "Reduces trade costs by " + percentage + "%.";
+            case "witch" -> "Potion effects last " + percentage + "% longer.";
+            case "dragon" -> "Deals " + percentage + "% extra critical damage.";
+            case "blaze" -> "Ignites enemies for " + percentage + " extra damage ticks.";
+            case "enderman" -> "Grants " + percentage + "% chance to dodge attacks.";
+            case "zombie" -> "Regenerates health " + percentage + "% faster.";
+            case "totem" -> "Gives " + percentage + "% chance to cheat death.";
+            case "guardian" -> "Reflects " + percentage + "% damage back to attackers.";
+            case "banker" -> "Earns " + percentage + "% more gold/money drops.";
+            case "skeleton" -> "Increases bow damage by " + percentage + "%.";
+            default -> "Grants special ability power.";
+        };
     }
 
     private static int getAbilityPercentage(String rarity) {
@@ -187,4 +220,5 @@ public class PetGui {
         }
         return item;
     }
-        }
+                }
+                
