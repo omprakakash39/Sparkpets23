@@ -1,0 +1,11 @@
+name: PetsPlugin
+version: 1.0
+main: com.yourplugin.pets.PetsPlugin
+api-version: '1.21'
+commands:
+  pets:
+    description: Open the Pets GUI menu
+    permission: pets.use
+permissions:
+  pets.use:
+    default: true
