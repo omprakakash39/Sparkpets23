@@ -29,7 +29,7 @@ public final class PetsPlugin extends JavaPlugin {
                         String petType = args[1];
                         String rarity = args[2];
                         player.getInventory().addItem(PetGui.createCustomPetItem(petType, rarity));
-                        player.sendMessage("§aGiven " + rarity + " " + petType + " Pet!");
+                        player.sendMessage("§aGiven " + rarity + " " + petType + " Pet Egg!");
                         return true;
                     } else if (args[0].equalsIgnoreCase("deactivate")) {
                         PetAbilities.deactivatePet(player);
