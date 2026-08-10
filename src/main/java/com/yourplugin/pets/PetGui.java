@@ -8,6 +8,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PetGui {
@@ -101,7 +102,8 @@ public class PetGui {
     }
 
     public static void openFusionMenu(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_AQUA + "Pet Fusion");
+        // Updated Fusion GUI size to 36 slots so ingredients and confirm button have clear spaces
+        Inventory inv = Bukkit.createInventory(null, 36, ChatColor.DARK_AQUA + "Pet Fusion");
         
         ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = pane.getItemMeta();
@@ -109,13 +111,30 @@ public class PetGui {
             meta.setDisplayName(" ");
             pane.setItemMeta(meta);
         }
-        for(int i=0; i<27; i++) inv.setItem(i, pane);
+        for(int i = 0; i < 36; i++) {
+            inv.setItem(i, pane);
+        }
 
-        inv.setItem(11, null);
-        inv.setItem(12, null);
-        inv.setItem(14, null);
-        inv.setItem(15, null);
-        inv.setItem(22, createGuiItem(Material.EMERALD_BLOCK, ChatColor.GREEN + "Confirm Fusion"));
+        // Allowed input slots for fusion (Slots 10, 11, 12, 13, 14, 15, 16 - Middle rows)
+        // Let's set standard input slots: 10, 11, 12, 13, 14, 15, 16 as empty/editable slots
+        for (int slot = 10; slot <= 16; slot++) {
+            inv.setItem(slot, null);
+        }
+
+        // Confirm Button at slot 31
+        ItemStack confirmBtn = new ItemStack(Material.EMERALD_BLOCK);
+        ItemMeta confirmMeta = confirmBtn.getItemMeta();
+        if (confirmMeta != null) {
+            confirmMeta.setDisplayName(ChatColor.GREEN + "§lConfirm Fusion");
+            confirmMeta.setLore(List.of(
+                ChatColor.GRAY + "Place required pets in slots above",
+                ChatColor.GRAY + "4 Common -> 1 Rare",
+                ChatColor.GRAY + "3 Rare -> 1 Epic",
+                ChatColor.GRAY + "2 Epic -> 1 Shiny"
+            ));
+            confirmBtn.setItemMeta(confirmMeta);
+        }
+        inv.setItem(31, confirmBtn);
 
         p.openInventory(inv);
     }
@@ -138,67 +157,131 @@ public class PetGui {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + type + " Pet");
+            String formattedName = getPetFormattedName(type, rarity);
+            meta.setDisplayName(formattedName);
             
-            int percentage = getAbilityPercentage(rarity);
-            String abilityName = getAbilityName(type);
-            String abilityDesc = getAbilityDescription(type, percentage);
+            double baseValue = getAbilityValue(rarity);
+            List<String> lore = new ArrayList<>();
+            
+            lore.add("§7Rarity: " + getRarityColor(rarity) + rarity);
+            lore.add("");
 
-            meta.setLore(List.of(
-                ChatColor.DARK_AQUA + "Rarity: " + getRarityColor(rarity) + rarity,
-                "",
-                ChatColor.LIGHT_PURPLE + abilityName,
-                ChatColor.GRAY + abilityDesc
-            ));
-            
+            switch (type.toLowerCase()) {
+                case "wolf" -> {
+                    lore.add("§cAttack Boost");
+                    lore.add("§fIncreases attack damage");
+                    lore.add("§c" + String.format("%.2f", baseValue) + "% §ffurther when");
+                    lore.add("§fattacking enemies");
+                }
+                case "golem" -> {
+                    lore.add("§bDamage Reduction");
+                    lore.add("§fDecreases damage taken");
+                    lore.add("§b" + String.format("%.2f", baseValue) + "% §ffrom all incoming");
+                    lore.add("§fattacks");
+                }
+                case "villager" -> {
+                    lore.add("§aTrade Master");
+                    lore.add("§fReduces trade costs");
+                    lore.add("§a" + String.format("%.2f", baseValue) + "% §fwhen dealing");
+                    lore.add("§fwith villagers");
+                }
+                case "witch" -> {
+                    lore.add("§5Alchemist");
+                    lore.add("§fPotion effects last");
+                    lore.add("§b" + String.format("%.2f", baseValue) + "% §flonger when");
+                    lore.add("§fconsumed");
+                }
+                case "dragon" -> {
+                    lore.add("§6Fierce Wrath");
+                    lore.add("§fDeals critical hit");
+                    lore.add("§e" + String.format("%.2f", baseValue) + "% §fextra damage");
+                    lore.add("§fto opponents");
+                }
+                case "blaze" -> {
+                    lore.add("§6Flame Aura");
+                    lore.add("§fBurns your targets");
+                    lore.add("§c" + String.format("%.2f", baseValue) + "% §flonger with");
+                    lore.add("§ffire damage ticks");
+                }
+                case "enderman" -> {
+                    lore.add("§dTeleport Reflex");
+                    lore.add("§fGrants chance to");
+                    lore.add("§d" + String.format("%.2f", baseValue) + "% §fdodge incoming");
+                    lore.add("§f enemy attacks");
+                }
+                case "zombie" -> {
+                    lore.add("§2Undead Resilience");
+                    lore.add("§fRegenerates your HP");
+                    lore.add("§a" + String.format("%.2f", baseValue) + "% §ffaster during");
+                    lore.add("§fcombat situations");
+                }
+                case "totem" -> {
+                    lore.add("§eUndying Grace");
+                    lore.add("§fGives chance to");
+                    lore.add("§e" + String.format("%.2f", baseValue) + "% §fsurvive fatal");
+                    lore.add("§fdamage instances");
+                }
+                case "guardian" -> {
+                    lore.add("§bLaser Thorns");
+                    lore.add("§fReflects back");
+                    lore.add("§b" + String.format("%.2f", baseValue) + "% §fdamage to");
+                    lore.add("§fyour attackers");
+                }
+                case "banker" -> {
+                    lore.add("§6Coin Master");
+                    lore.add("§fIncreases earnings");
+                    lore.add("§e" + String.format("%.2f", baseValue) + "% §ffrom mob drops");
+                    lore.add("§fand resources");
+                }
+                case "skeleton" -> {
+                    lore.add("§fArchery Focus");
+                    lore.add("§fBoosts bow damage");
+                    lore.add("§7" + String.format("%.2f", baseValue) + "% §ffurther against");
+                    lore.add("§ftargeted foes");
+                }
+                default -> {
+                    lore.add("§7Special Perk");
+                    lore.add("§fBoosts stats by");
+                    lore.add("§b" + String.format("%.2f", baseValue) + "% §for overall");
+                    lore.add("§feffectiveness");
+                }
+            }
+
+            lore.add("");
+            lore.add("§8§l» §7" + rarity + " Pet");
+
+            meta.setLore(lore);
             meta.setMaxStackSize(1);
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    private static String getAbilityName(String type) {
-        return switch (type.toLowerCase()) {
-            case "wolf" -> "Attack Boost";
-            case "golem" -> "Damage Reduction";
-            case "villager" -> "Trade Master";
-            case "witch" -> "Alchemist";
-            case "dragon" -> "Fierce Wrath";
-            case "blaze" -> "Flame Aura";
-            case "enderman" -> "Teleport Reflex";
-            case "zombie" -> "Undead Resilience";
-            case "totem" -> "Undying Grace";
-            case "guardian" -> "Laser Thorns";
-            case "banker" -> "Coin Master";
-            case "skeleton" -> "Archery Focus";
-            default -> "Special Perk";
+    private static String getPetFormattedName(String type, String rarity) {
+        String colorCode = switch (type.toLowerCase()) {
+            case "wolf" -> "§c";       // Red
+            case "golem" -> "§b";      // Aqua
+            case "villager" -> "§a";   // Light Green
+            case "witch" -> "§5";      // Purple
+            case "dragon" -> "§6";     // Gold
+            case "blaze" -> "§e";      // Yellow
+            case "enderman" -> "§d";   // Light Purple
+            case "zombie" -> "§2";     // Dark Green
+            case "totem" -> "§e";      // Yellow
+            case "guardian" -> "§3";   // Dark Aqua
+            case "banker" -> "§6";     // Gold
+            case "skeleton" -> "§f";   // White
+            default -> "§7";
         };
+        return colorCode + type + " Pet";
     }
 
-    private static String getAbilityDescription(String type, int percentage) {
-        return switch (type.toLowerCase()) {
-            case "wolf" -> "Increases your attack damage by " + percentage + "%.";
-            case "golem" -> "Decreases your damage taken by " + percentage + "%.";
-            case "villager" -> "Reduces trade costs by " + percentage + "%.";
-            case "witch" -> "Potion effects last " + percentage + "% longer.";
-            case "dragon" -> "Deals " + percentage + "% extra critical damage.";
-            case "blaze" -> "Ignites enemies for " + percentage + " extra damage ticks.";
-            case "enderman" -> "Grants " + percentage + "% chance to dodge attacks.";
-            case "zombie" -> "Regenerates health " + percentage + "% faster.";
-            case "totem" -> "Gives " + percentage + "% chance to cheat death.";
-            case "guardian" -> "Reflects " + percentage + "% damage back to attackers.";
-            case "banker" -> "Earns " + percentage + "% more gold/money drops.";
-            case "skeleton" -> "Increases bow damage by " + percentage + "%.";
-            default -> "Grants special ability power.";
-        };
-    }
-
-    private static int getAbilityPercentage(String rarity) {
+    private static double getAbilityValue(String rarity) {
         return switch (rarity.toLowerCase()) {
-            case "rare" -> 10;
-            case "epic" -> 15;
-            case "shiny" -> 20;
-            default -> 5;
+            case "rare" -> 10.00;
+            case "epic" -> 15.00;
+            case "shiny" -> 20.00;
+            default -> 5.00;
         };
     }
 
@@ -220,5 +303,4 @@ public class PetGui {
         }
         return item;
     }
-                }
-                
+            }
