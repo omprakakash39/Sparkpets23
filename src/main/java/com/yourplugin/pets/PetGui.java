@@ -25,7 +25,7 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        // Top Row (Slots 0-8): 4 Rarity Allay Spawn Eggs for claiming
+        // Top Row (Slots 1, 3, 5, 7): Allay Spawn Eggs for claiming
         inv.setItem(1, createSpawnEgg("Common"));
         inv.setItem(3, createSpawnEgg("Rare"));
         inv.setItem(5, createSpawnEgg("Epic"));
@@ -111,7 +111,6 @@ public class PetGui {
         }
         for(int i=0; i<27; i++) inv.setItem(i, pane);
 
-        // Fusion input slots
         inv.setItem(11, null);
         inv.setItem(12, null);
         inv.setItem(14, null);
@@ -127,7 +126,7 @@ public class PetGui {
         if (meta != null) {
             meta.setDisplayName(ChatColor.WHITE + rarity + " Pet Egg");
             meta.setLore(List.of(
-                ChatColor.GRAY + "Right click to get a random " + rarity + " pet!"
+                ChatColor.GRAY + "Right click to hatch a " + rarity + " pet!"
             ));
             meta.setMaxStackSize(1);
             item.setItemMeta(meta);
@@ -188,4 +187,4 @@ public class PetGui {
         }
         return item;
     }
-            }
+        }
