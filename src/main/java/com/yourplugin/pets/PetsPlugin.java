@@ -45,4 +45,3 @@ public final class PetsPlugin extends JavaPlugin {
         return false;
     }
 }
-
