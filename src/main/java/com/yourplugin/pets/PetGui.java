@@ -25,9 +25,9 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        inv.setItem(0, createGuiItem(Material.ARROW, ChatColor.GRAY + "◀ Previous Page"));
+        inv.setItem(0, createGuiItem(Material.ARROW, ChatColor.GRAY + "Previous Page"));
         inv.setItem(4, createGuiItem(Material.ANVIL, ChatColor.YELLOW + "Pet Fusion (Click to Open)"));
-        inv.setItem(8, createGuiItem(Material.ARROW, ChatColor.GREEN + "Next Page ▶"));
+        inv.setItem(8, createGuiItem(Material.ARROW, ChatColor.GREEN + "Next Page"));
 
         if (page == 1) {
             inv.setItem(11, createCustomPetItem("Wolf", "Common"));
@@ -95,7 +95,7 @@ public class PetGui {
     }
 
     public static void openFusionMenu(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_AQUA + "Pet Fusion (4 Slots)");
+        Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_AQUA + "Pet Fusion");
         
         ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = pane.getItemMeta();
@@ -115,37 +115,60 @@ public class PetGui {
     }
 
     public static ItemStack createCustomPetItem(String type, String rarity) {
-        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        // Using Allay Spawn Egg as the Pet Egg base
+        ItemStack item = new ItemStack(Material.ALLAY_SPAWN_EGG);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.WHITE + type + " Pet");
+            // Setting name based on ability without bold or emojis
+            String baseName = switch (type.toLowerCase()) {
+                case "wolf" -> "Attack Boost Pet";
+                case "golem" -> "Damage Reduction Pet";
+                case "villager" -> "Trade Master Pet";
+                case "witch" -> "Alchemist Pet";
+                default -> type + " Pet";
+            };
+
+            meta.setDisplayName(ChatColor.WHITE + baseName);
             
             String abilityName = "Ability";
             String abilityDesc = "Special Perk";
+            int percentage = getAbilityPercentage(rarity);
 
             if (type.equalsIgnoreCase("Wolf")) {
                 abilityName = "Attack Boost";
-                abilityDesc = rarity.equalsIgnoreCase("Shiny") ? "Increases your attack damage by 20%!" : "Increases your attack damage!";
+                abilityDesc = "Increases attack damage by " + percentage + "%!";
             } else if (type.equalsIgnoreCase("Golem")) {
                 abilityName = "Damage Reduction";
-                abilityDesc = rarity.equalsIgnoreCase("Shiny") ? "Decreases your damage taken by 16%!" : "Decreases damage taken.";
+                abilityDesc = "Decreases damage taken by " + percentage + "%!";
             } else if (type.equalsIgnoreCase("Villager")) {
                 abilityName = "Trade Master";
-                abilityDesc = "Activates Hero of the Village";
+                abilityDesc = "Reduces trade costs by " + percentage + "%!";
             } else if (type.equalsIgnoreCase("Witch")) {
                 abilityName = "Alchemist";
-                abilityDesc = "Potion effects last longer.";
+                abilityDesc = "Potion duration increased by " + percentage + "%!";
             }
 
             meta.setLore(List.of(
-                ChatColor.DARK_AQUA + "┃ Rarity: " + getRarityColor(rarity) + rarity,
+                ChatColor.DARK_AQUA + "Rarity: " + getRarityColor(rarity) + rarity,
                 "",
                 ChatColor.LIGHT_PURPLE + abilityName,
                 ChatColor.GRAY + abilityDesc
             ));
+            
+            // Prevent stacking
+            meta.setMaxStackSize(1);
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static int getAbilityPercentage(String rarity) {
+        return switch (rarity.toLowerCase()) {
+            case "rare" -> 10;
+            case "epic" -> 15;
+            case "shiny" -> 20;
+            default -> 5; // Common
+        };
     }
 
     private static ChatColor getRarityColor(String rarity) {
@@ -166,4 +189,4 @@ public class PetGui {
         }
         return item;
     }
-}
+        }
