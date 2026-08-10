@@ -25,7 +25,6 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        // Navigation & Anvil Buttons
         inv.setItem(0, createGuiItem(Material.ARROW, ChatColor.GRAY + "◀ Previous Page"));
         inv.setItem(4, createGuiItem(Material.ANVIL, ChatColor.YELLOW + "Pet Fusion (Click to Open)"));
         inv.setItem(8, createGuiItem(Material.ARROW, ChatColor.GREEN + "Next Page ▶"));
@@ -106,7 +105,6 @@ public class PetGui {
         }
         for(int i=0; i<27; i++) inv.setItem(i, pane);
 
-        // 4 Fusion Slots at index 11, 12, 14, 15
         inv.setItem(11, null);
         inv.setItem(12, null);
         inv.setItem(14, null);
@@ -116,6 +114,7 @@ public class PetGui {
         p.openInventory(inv);
     }
 
+    // MAKE SURE THIS IS PUBLIC STATIC
     public static ItemStack createCustomPetItem(String type, String rarity) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = item.getItemMeta();
