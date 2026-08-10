@@ -1,6 +1,8 @@
 package com.yourplugin.pets;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -42,13 +44,14 @@ public class PetAbilities implements Listener {
                     else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 1);
                 } else if (itemName.contains("Pet Fusion")) {
                     PetGui.openFusionMenu(player);
-                } else if (event.getCurrentItem().getType().name().contains("HEAD")) {
+                } else if (event.getCurrentItem().getType().name().contains("SPAWN_EGG")) {
                     player.getInventory().addItem(event.getCurrentItem());
-                    player.sendMessage(ChatColor.GREEN + "Claimed pet to your inventory!");
+                    player.sendMessage(ChatColor.GREEN + "Claimed pet egg to your inventory!");
                 }
             }
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
+            // Restrict interaction to slots 11, 12, 14, 15 and confirm button at 22 inside the GUI container (0-26)
             if (slot < 27) {
                 if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
                     event.setCancelled(true);
@@ -70,6 +73,7 @@ public class PetAbilities implements Listener {
                 if (name.contains("Pet")) {
                     Player player = event.getPlayer();
                     
+                    // Return previous pet to inventory if active
                     if (activePetItems.containsKey(player.getUniqueId())) {
                         player.getInventory().addItem(activePetItems.get(player.getUniqueId()));
                     }
@@ -78,6 +82,10 @@ public class PetAbilities implements Listener {
                     activePetItems.put(player.getUniqueId(), item.clone());
                     
                     item.setAmount(item.getAmount() - 1);
+                    
+                    // Play Beacon Activation Sound
+                    player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
+                    
                     player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
                     event.setCancelled(true);
                 }
@@ -103,17 +111,21 @@ public class PetAbilities implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player attacker) {
             String pet = activePets.get(attacker.getUniqueId());
-            if (pet != null && pet.contains("Wolf")) {
+            if (pet != null && pet.contains("Attack Boost")) {
                 if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 1.20);
+                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 1.15);
+                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 1.10);
                 else event.setDamage(event.getDamage() * 1.05);
             }
         }
 
         if (event.getEntity() instanceof Player victim) {
             String pet = activePets.get(victim.getUniqueId());
-            if (pet != null && pet.contains("Golem")) {
-                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 0.84);
-                else event.setDamage(event.getDamage() * 0.96);
+            if (pet != null && pet.contains("Damage Reduction")) {
+                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 0.80);
+                else if (pet.contains("Epic")) event.setDamage(event.getDamage() * 0.85);
+                else if (pet.contains("Rare")) event.setDamage(event.getDamage() * 0.90);
+                else event.setDamage(event.getDamage() * 0.95);
             }
         }
     }
