@@ -69,14 +69,14 @@ public class PetAbilities implements Listener {
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            ItemStack item = event.getItem();
-            if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-                String name = item.getItemMeta().getDisplayName();
+            ItemStack clickedItem = event.getItem();
+            if (clickedItem != null && clickedItem.hasItemMeta() && clickedItem.getItemMeta().hasDisplayName()) {
+                String name = clickedItem.getItemMeta().getDisplayName();
                 Player player = event.getPlayer();
 
                 if (name.contains("Pet Egg")) {
                     event.setCancelled(true);
-                    item.setAmount(item.getAmount() - 1);
+                    clickedItem.setAmount(clickedItem.getAmount() - 1);
 
                     String rarity = "Common";
                     if (name.contains("Rare")) rarity = "Rare";
@@ -94,7 +94,7 @@ public class PetAbilities implements Listener {
                     return;
                 }
 
-                if (item.getType() == Material.PLAYER_HEAD) {
+                if (clickedItem.getType() == org.bukkit.Material.PLAYER_HEAD) {
                     event.setCancelled(true);
 
                     if (activePetItems.containsKey(player.getUniqueId())) {
@@ -102,9 +102,9 @@ public class PetAbilities implements Listener {
                     }
 
                     activePets.put(player.getUniqueId(), name);
-                    activePetItems.put(player.getUniqueId(), item.clone());
+                    activePetItems.put(player.getUniqueId(), clickedItem.clone());
                     
-                    item.setAmount(item.getAmount() - 1);
+                    clickedItem.setAmount(clickedItem.getAmount() - 1);
                     
                     player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
                     player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
@@ -156,3 +156,4 @@ public class PetAbilities implements Listener {
         }
     }
 }
+
