@@ -2,6 +2,7 @@ package com.yourplugin.pets;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,14 +48,12 @@ public class PetAbilities implements Listener {
                 } else if (itemName.contains("Pet Fusion")) {
                     PetGui.openFusionMenu(player);
                 } else if (itemName.contains("Pet Egg")) {
-                    // Give spawn egg to inventory when clicked in top row
                     player.getInventory().addItem(event.getCurrentItem().clone());
                     player.sendMessage(ChatColor.GREEN + "Claimed pet egg!");
                 }
             }
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
-            // Allow putting items in slots 11, 12, 14, 15 and clicking confirm at slot 22
             if (slot < 27) {
                 if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
                     event.setCancelled(true);
@@ -71,11 +70,10 @@ public class PetAbilities implements Listener {
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             ItemStack item = event.getItem();
-            if (item != null && item.hasItemMeta() && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
                 String name = item.getItemMeta().getDisplayName();
                 Player player = event.getPlayer();
 
-                // If right-clicking a Pet Egg from top row
                 if (name.contains("Pet Egg")) {
                     event.setCancelled(true);
                     item.setAmount(item.getAmount() - 1);
@@ -91,17 +89,14 @@ public class PetAbilities implements Listener {
                     ItemStack petHead = PetGui.createPetHead(randomType, rarity);
                     player.getInventory().addItem(petHead);
 
-                    // Play Note Block Tune
                     playNoteTune(player);
                     player.sendMessage(ChatColor.GREEN + "You hatched a " + rarity + " " + randomType + " Pet!");
                     return;
                 }
 
-                // If right-clicking a Pet Head to equip
                 if (item.getType() == Material.PLAYER_HEAD) {
                     event.setCancelled(true);
 
-                    // Return old pet if equipped
                     if (activePetItems.containsKey(player.getUniqueId())) {
                         player.getInventory().addItem(activePetItems.get(player.getUniqueId()));
                     }
@@ -111,7 +106,6 @@ public class PetAbilities implements Listener {
                     
                     item.setAmount(item.getAmount() - 1);
                     
-                    // Beacon activation sound & message
                     player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
                     player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
                 }
@@ -120,7 +114,6 @@ public class PetAbilities implements Listener {
     }
 
     private void playNoteTune(Player player) {
-        // Simple note block melody sequence
         Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.0f), 0L);
         Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.2f), 3L);
         Bukkit.getScheduler().runTaskLater(plugin, () -> player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 1.0f, 1.5f), 6L);
@@ -162,5 +155,4 @@ public class PetAbilities implements Listener {
             }
         }
     }
-                    }
-
+}
