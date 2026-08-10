@@ -1,100 +1,47 @@
 package com.yourplugin.pets;
 
-import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.UUID;
+public final class PetsPlugin extends JavaPlugin {
 
-public class PetAbilities implements Listener {
-
-    private final PetsPlugin plugin;
-    public static final HashMap<UUID, String> activePets = new HashMap<>();
-
-    public PetAbilities(PetsPlugin plugin) {
-        this.plugin = plugin;
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        getServer().getPluginManager().registerEvents(new PetAbilities(this), this);
+        getLogger().info("PetsPlugin has been enabled successfully!");
     }
 
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        String title = event.getView().getTitle();
-        if (title.contains("Pets")) {
-            // Only cancel if clicking inside the custom GUI menu slots, allow player inventory interaction safely
-            if (event.getRawSlot() < 54) {
-                event.setCancelled(true);
-                if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
-
-                Player player = (Player) event.getWhoClicked();
-                String itemName = event.getCurrentItem().getItemMeta().getDisplayName();
-
-                if (itemName.contains("Next Page")) {
-                    if (title.contains("(1/3)")) PetGui.openPetsMenu(player, 2);
-                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 3);
-                } else if (itemName.contains("Previous Page")) {
-                    if (title.contains("(3/3)")) PetGui.openPetsMenu(player, 2);
-                    else if (title.contains("(2/3)")) PetGui.openPetsMenu(player, 1);
-                } else if (itemName.contains("Pet Fusion")) {
-                    PetGui.openFusionMenu(player);
-                } else if (event.getCurrentItem().getType().name().contains("HEAD")) {
-                    // Give pet item to player inventory or equip
-                    player.getInventory().addItem(event.getCurrentItem());
-                    player.sendMessage(ChatColor.GREEN + "Claimed pet to your inventory!");
-                }
-            }
-        } else if (title.contains("Pet Fusion")) {
-            // Allow managing the 4 fusion slots (11, 12, 14, 15) and emerald button (22)
-            int slot = event.getRawSlot();
-            if (slot < 27) {
-                if (slot != 11 && slot != 12 && slot != 14 && slot != 15 && slot != 22) {
-                    event.setCancelled(true);
-                } else if (slot == 22) {
-                    event.setCancelled(true);
-                    event.getWhoClicked().sendMessage(ChatColor.YELLOW + "Fusion process completed!");
-                    event.getWhoClicked().closeInventory();
-                }
-            }
-        }
+    @Override
+    public void onDisable() {
+        getLogger().info("PetsPlugin has been disabled.");
     }
 
-    @EventHandler
-    public void onRightClick(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            ItemStack item = event.getItem();
-            if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-                String name = item.getItemMeta().getDisplayName();
-                if (name.contains("Pet")) {
-                    Player player = event.getPlayer();
-                    activePets.put(player.getUniqueId(), name);
-                    player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
-                    event.setCancelled(true);
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (command.getName().equalsIgnoreCase("pets") || command.getName().equalsIgnoreCase("pet")) {
+            if (sender instanceof Player player) {
+                if (args.length > 0) {
+                    if (args[0].equalsIgnoreCase("give") && args.length >= 3) {
+                        String petType = args[1];
+                        String rarity = args[2];
+                        player.getInventory().addItem(PetGui.createCustomPetItem(petType, rarity));
+                        player.sendMessage("§aGiven " + rarity + " " + petType + " Pet!");
+                        return true;
+                    } else if (args[0].equalsIgnoreCase("deactivate")) {
+                        PetAbilities.deactivatePet(player);
+                        return true;
+                    }
                 }
+                PetGui.openPetsMenu(player, 1);
+            } else {
+                sender.sendMessage("This command can only be used by players.");
             }
+            return true;
         }
-    }
-
-    @EventHandler
-    public void onDamage(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player attacker) {
-            String pet = activePets.get(attacker.getUniqueId());
-            if (pet != null && pet.contains("Wolf")) {
-                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 1.20);
-                else event.setDamage(event.getDamage() * 1.05);
-            }
-        }
-
-        if (event.getEntity() instanceof Player victim) {
-            String pet = activePets.get(victim.getUniqueId());
-            if (pet != null && pet.contains("Golem")) {
-                if (pet.contains("Shiny")) event.setDamage(event.getDamage() * 0.84);
-                else event.setDamage(event.getDamage() * 0.96);
-            }
-        }
+        return false;
     }
 }
