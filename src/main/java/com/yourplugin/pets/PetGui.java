@@ -25,70 +25,76 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        inv.setItem(0, createGuiItem(Material.ARROW, ChatColor.GRAY + "Previous Page"));
-        inv.setItem(4, createGuiItem(Material.ANVIL, ChatColor.YELLOW + "Pet Fusion (Click to Open)"));
-        inv.setItem(8, createGuiItem(Material.ARROW, ChatColor.GREEN + "Next Page"));
+        // Top Row (Slots 0-8): 4 Rarity Allay Spawn Eggs for claiming
+        inv.setItem(1, createSpawnEgg("Common"));
+        inv.setItem(3, createSpawnEgg("Rare"));
+        inv.setItem(5, createSpawnEgg("Epic"));
+        inv.setItem(7, createSpawnEgg("Shiny"));
+
+        inv.setItem(45, createGuiItem(Material.ARROW, ChatColor.GRAY + "Previous Page"));
+        inv.setItem(49, createGuiItem(Material.ANVIL, ChatColor.YELLOW + "Pet Fusion"));
+        inv.setItem(53, createGuiItem(Material.ARROW, ChatColor.GREEN + "Next Page"));
 
         if (page == 1) {
-            inv.setItem(11, createCustomPetItem("Wolf", "Common"));
-            inv.setItem(12, createCustomPetItem("Wolf", "Rare"));
-            inv.setItem(14, createCustomPetItem("Wolf", "Epic"));
-            inv.setItem(15, createCustomPetItem("Wolf", "Shiny"));
+            inv.setItem(11, createPetHead("Wolf", "Common"));
+            inv.setItem(12, createPetHead("Wolf", "Rare"));
+            inv.setItem(14, createPetHead("Wolf", "Epic"));
+            inv.setItem(15, createPetHead("Wolf", "Shiny"));
 
-            inv.setItem(20, createCustomPetItem("Golem", "Common"));
-            inv.setItem(21, createCustomPetItem("Golem", "Rare"));
-            inv.setItem(23, createCustomPetItem("Golem", "Epic"));
-            inv.setItem(24, createCustomPetItem("Golem", "Shiny"));
+            inv.setItem(20, createPetHead("Golem", "Common"));
+            inv.setItem(21, createPetHead("Golem", "Rare"));
+            inv.setItem(23, createPetHead("Golem", "Epic"));
+            inv.setItem(24, createPetHead("Golem", "Shiny"));
 
-            inv.setItem(29, createCustomPetItem("Villager", "Common"));
-            inv.setItem(30, createCustomPetItem("Villager", "Rare"));
-            inv.setItem(32, createCustomPetItem("Villager", "Epic"));
-            inv.setItem(33, createCustomPetItem("Villager", "Shiny"));
+            inv.setItem(29, createPetHead("Villager", "Common"));
+            inv.setItem(30, createPetHead("Villager", "Rare"));
+            inv.setItem(32, createPetHead("Villager", "Epic"));
+            inv.setItem(33, createPetHead("Villager", "Shiny"));
 
-            inv.setItem(38, createCustomPetItem("Witch", "Common"));
-            inv.setItem(39, createCustomPetItem("Witch", "Rare"));
-            inv.setItem(41, createCustomPetItem("Witch", "Epic"));
-            inv.setItem(42, createCustomPetItem("Witch", "Shiny"));
+            inv.setItem(38, createPetHead("Witch", "Common"));
+            inv.setItem(39, createPetHead("Witch", "Rare"));
+            inv.setItem(41, createPetHead("Witch", "Epic"));
+            inv.setItem(42, createPetHead("Witch", "Shiny"));
         } else if (page == 2) {
-            inv.setItem(11, createCustomPetItem("Dragon", "Common"));
-            inv.setItem(12, createCustomPetItem("Dragon", "Rare"));
-            inv.setItem(14, createCustomPetItem("Dragon", "Epic"));
-            inv.setItem(15, createCustomPetItem("Dragon", "Shiny"));
+            inv.setItem(11, createPetHead("Dragon", "Common"));
+            inv.setItem(12, createPetHead("Dragon", "Rare"));
+            inv.setItem(14, createPetHead("Dragon", "Epic"));
+            inv.setItem(15, createPetHead("Dragon", "Shiny"));
 
-            inv.setItem(20, createCustomPetItem("Blaze", "Common"));
-            inv.setItem(21, createCustomPetItem("Blaze", "Rare"));
-            inv.setItem(23, createCustomPetItem("Blaze", "Epic"));
-            inv.setItem(24, createCustomPetItem("Blaze", "Shiny"));
+            inv.setItem(20, createPetHead("Blaze", "Common"));
+            inv.setItem(21, createPetHead("Blaze", "Rare"));
+            inv.setItem(23, createPetHead("Blaze", "Epic"));
+            inv.setItem(24, createPetHead("Blaze", "Shiny"));
 
-            inv.setItem(29, createCustomPetItem("Enderman", "Common"));
-            inv.setItem(30, createCustomPetItem("Enderman", "Rare"));
-            inv.setItem(32, createCustomPetItem("Enderman", "Epic"));
-            inv.setItem(33, createCustomPetItem("Enderman", "Shiny"));
+            inv.setItem(29, createPetHead("Enderman", "Common"));
+            inv.setItem(30, createPetHead("Enderman", "Rare"));
+            inv.setItem(32, createPetHead("Enderman", "Epic"));
+            inv.setItem(33, createPetHead("Enderman", "Shiny"));
 
-            inv.setItem(38, createCustomPetItem("Zombie", "Common"));
-            inv.setItem(39, createCustomPetItem("Zombie", "Rare"));
-            inv.setItem(41, createCustomPetItem("Zombie", "Epic"));
-            inv.setItem(42, createCustomPetItem("Zombie", "Shiny"));
+            inv.setItem(38, createPetHead("Zombie", "Common"));
+            inv.setItem(39, createPetHead("Zombie", "Rare"));
+            inv.setItem(41, createPetHead("Zombie", "Epic"));
+            inv.setItem(42, createPetHead("Zombie", "Shiny"));
         } else if (page == 3) {
-            inv.setItem(11, createCustomPetItem("Totem", "Common"));
-            inv.setItem(12, createCustomPetItem("Totem", "Rare"));
-            inv.setItem(14, createCustomPetItem("Totem", "Epic"));
-            inv.setItem(15, createCustomPetItem("Totem", "Shiny"));
+            inv.setItem(11, createPetHead("Totem", "Common"));
+            inv.setItem(12, createPetHead("Totem", "Rare"));
+            inv.setItem(14, createPetHead("Totem", "Epic"));
+            inv.setItem(15, createPetHead("Totem", "Shiny"));
 
-            inv.setItem(20, createCustomPetItem("Guardian", "Common"));
-            inv.setItem(21, createCustomPetItem("Guardian", "Rare"));
-            inv.setItem(23, createCustomPetItem("Guardian", "Epic"));
-            inv.setItem(24, createCustomPetItem("Guardian", "Shiny"));
+            inv.setItem(20, createPetHead("Guardian", "Common"));
+            inv.setItem(21, createPetHead("Guardian", "Rare"));
+            inv.setItem(23, createPetHead("Guardian", "Epic"));
+            inv.setItem(24, createPetHead("Guardian", "Shiny"));
 
-            inv.setItem(29, createCustomPetItem("Banker", "Common"));
-            inv.setItem(30, createCustomPetItem("Banker", "Rare"));
-            inv.setItem(32, createCustomPetItem("Banker", "Epic"));
-            inv.setItem(33, createCustomPetItem("Banker", "Shiny"));
+            inv.setItem(29, createPetHead("Banker", "Common"));
+            inv.setItem(30, createPetHead("Banker", "Rare"));
+            inv.setItem(32, createPetHead("Banker", "Epic"));
+            inv.setItem(33, createPetHead("Banker", "Shiny"));
 
-            inv.setItem(38, createCustomPetItem("Skeleton", "Common"));
-            inv.setItem(39, createCustomPetItem("Skeleton", "Rare"));
-            inv.setItem(41, createCustomPetItem("Skeleton", "Epic"));
-            inv.setItem(42, createCustomPetItem("Skeleton", "Shiny"));
+            inv.setItem(38, createPetHead("Skeleton", "Common"));
+            inv.setItem(39, createPetHead("Skeleton", "Rare"));
+            inv.setItem(41, createPetHead("Skeleton", "Epic"));
+            inv.setItem(42, createPetHead("Skeleton", "Shiny"));
         }
 
         p.openInventory(inv);
@@ -105,6 +111,7 @@ public class PetGui {
         }
         for(int i=0; i<27; i++) inv.setItem(i, pane);
 
+        // Fusion input slots
         inv.setItem(11, null);
         inv.setItem(12, null);
         inv.setItem(14, null);
@@ -114,48 +121,40 @@ public class PetGui {
         p.openInventory(inv);
     }
 
-    public static ItemStack createCustomPetItem(String type, String rarity) {
-        // Using Allay Spawn Egg as the Pet Egg base
+    public static ItemStack createSpawnEgg(String rarity) {
         ItemStack item = new ItemStack(Material.ALLAY_SPAWN_EGG);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            // Setting name based on ability without bold or emojis
+            meta.setDisplayName(ChatColor.WHITE + rarity + " Pet Egg");
+            meta.setLore(List.of(
+                ChatColor.GRAY + "Right click to get a random " + rarity + " pet!"
+            ));
+            meta.setMaxStackSize(1);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    public static ItemStack createPetHead(String type, String rarity) {
+        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
             String baseName = switch (type.toLowerCase()) {
-                case "wolf" -> "Attack Boost Pet";
-                case "golem" -> "Damage Reduction Pet";
-                case "villager" -> "Trade Master Pet";
-                case "witch" -> "Alchemist Pet";
-                default -> type + " Pet";
+                case "wolf" -> "Attack Boost";
+                case "golem" -> "Damage Reduction";
+                case "villager" -> "Trade Master";
+                case "witch" -> "Alchemist";
+                default -> type;
             };
 
             meta.setDisplayName(ChatColor.WHITE + baseName);
-            
-            String abilityName = "Ability";
-            String abilityDesc = "Special Perk";
             int percentage = getAbilityPercentage(rarity);
-
-            if (type.equalsIgnoreCase("Wolf")) {
-                abilityName = "Attack Boost";
-                abilityDesc = "Increases attack damage by " + percentage + "%!";
-            } else if (type.equalsIgnoreCase("Golem")) {
-                abilityName = "Damage Reduction";
-                abilityDesc = "Decreases damage taken by " + percentage + "%!";
-            } else if (type.equalsIgnoreCase("Villager")) {
-                abilityName = "Trade Master";
-                abilityDesc = "Reduces trade costs by " + percentage + "%!";
-            } else if (type.equalsIgnoreCase("Witch")) {
-                abilityName = "Alchemist";
-                abilityDesc = "Potion duration increased by " + percentage + "%!";
-            }
 
             meta.setLore(List.of(
                 ChatColor.DARK_AQUA + "Rarity: " + getRarityColor(rarity) + rarity,
-                "",
-                ChatColor.LIGHT_PURPLE + abilityName,
-                ChatColor.GRAY + abilityDesc
+                ChatColor.GRAY + "Power: " + percentage + "%"
             ));
             
-            // Prevent stacking
             meta.setMaxStackSize(1);
             item.setItemMeta(meta);
         }
@@ -167,7 +166,7 @@ public class PetGui {
             case "rare" -> 10;
             case "epic" -> 15;
             case "shiny" -> 20;
-            default -> 5; // Common
+            default -> 5;
         };
     }
 
@@ -189,4 +188,4 @@ public class PetGui {
         }
         return item;
     }
-        }
+            }
