@@ -3,10 +3,12 @@ package com.yourplugin.pets;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,6 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        // Top Row (Slots 1, 3, 5, 7): Allay Spawn Eggs for claiming
         inv.setItem(1, createSpawnEgg("Common"));
         inv.setItem(3, createSpawnEgg("Rare"));
         inv.setItem(5, createSpawnEgg("Epic"));
@@ -102,7 +103,6 @@ public class PetGui {
     }
 
     public static void openFusionMenu(Player p) {
-        // Updated Fusion GUI size to 36 slots so ingredients and confirm button have clear spaces
         Inventory inv = Bukkit.createInventory(null, 36, ChatColor.DARK_AQUA + "Pet Fusion");
         
         ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
@@ -115,13 +115,10 @@ public class PetGui {
             inv.setItem(i, pane);
         }
 
-        // Allowed input slots for fusion (Slots 10, 11, 12, 13, 14, 15, 16 - Middle rows)
-        // Let's set standard input slots: 10, 11, 12, 13, 14, 15, 16 as empty/editable slots
         for (int slot = 10; slot <= 16; slot++) {
             inv.setItem(slot, null);
         }
 
-        // Confirm Button at slot 31
         ItemStack confirmBtn = new ItemStack(Material.EMERALD_BLOCK);
         ItemMeta confirmMeta = confirmBtn.getItemMeta();
         if (confirmMeta != null) {
@@ -160,6 +157,12 @@ public class PetGui {
             String formattedName = getPetFormattedName(type, rarity);
             meta.setDisplayName(formattedName);
             
+            // Tag metadata so the plugin never loses track of type and rarity
+            NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_type");
+            NamespacedKey rarityKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_rarity");
+            meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, type);
+            meta.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, rarity);
+
             double baseValue = getAbilityValue(rarity);
             List<String> lore = new ArrayList<>();
             
@@ -257,26 +260,26 @@ public class PetGui {
         return item;
     }
 
-    private static String getPetFormattedName(String type, String rarity) {
+    public static String getPetFormattedName(String type, String rarity) {
         String colorCode = switch (type.toLowerCase()) {
-            case "wolf" -> "§c";       // Red
-            case "golem" -> "§b";      // Aqua
-            case "villager" -> "§a";   // Light Green
-            case "witch" -> "§5";      // Purple
-            case "dragon" -> "§6";     // Gold
-            case "blaze" -> "§e";      // Yellow
-            case "enderman" -> "§d";   // Light Purple
-            case "zombie" -> "§2";     // Dark Green
-            case "totem" -> "§e";      // Yellow
-            case "guardian" -> "§3";   // Dark Aqua
-            case "banker" -> "§6";     // Gold
-            case "skeleton" -> "§f";   // White
+            case "wolf" -> "§c";
+            case "golem" -> "§b";
+            case "villager" -> "§a";
+            case "witch" -> "§5";
+            case "dragon" -> "§6";
+            case "blaze" -> "§e";
+            case "enderman" -> "§d";
+            case "zombie" -> "§2";
+            case "totem" -> "§e";
+            case "guardian" -> "§3";
+            case "banker" -> "§6";
+            case "skeleton" -> "§f";
             default -> "§7";
         };
         return colorCode + type + " Pet";
     }
 
-    private static double getAbilityValue(String rarity) {
+    public static double getAbilityValue(String rarity) {
         return switch (rarity.toLowerCase()) {
             case "rare" -> 10.00;
             case "epic" -> 15.00;
@@ -303,4 +306,4 @@ public class PetGui {
         }
         return item;
     }
-            }
+    }
