@@ -1,7 +1,7 @@
 package com.yourplugin.pets;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.PlayerTextures;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -13,9 +13,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -268,14 +267,9 @@ public class PetGui {
 
     private static void setSkullTextureFromUrl(SkullMeta skullMeta, String skinUrl) {
         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
-        PlayerTextures textures = profile.getTextures();
-        try {
-            textures.setSkin(new URL(skinUrl));
-            profile.setTextures(textures);
-            skullMeta.setPlayerProfile(profile);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        byte[] encodedData = Base64.getEncoder().encode(String.format("{\"textures\":{\"SKIN\":{\"url\":\"%s\"}}}", skinUrl).getBytes());
+        profile.setProperty(new ProfileProperty("textures", new String(encodedData)));
+        skullMeta.setPlayerProfile(profile);
     }
 
     private static String getTextureSkinUrl(String type) {
@@ -342,4 +336,4 @@ public class PetGui {
         }
         return item;
     }
-                }
+            }
