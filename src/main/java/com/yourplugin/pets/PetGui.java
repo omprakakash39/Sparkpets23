@@ -1,5 +1,7 @@
 package com.yourplugin.pets;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -8,10 +10,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class PetGui {
 
@@ -152,12 +157,14 @@ public class PetGui {
 
     public static ItemStack createPetHead(String type, String rarity) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
-        ItemMeta meta = item.getItemMeta();
+        SkullMeta meta = (SkullMeta) item.getItemMeta();
         if (meta != null) {
             String formattedName = getPetFormattedName(type, rarity);
             meta.setDisplayName(formattedName);
             
-            // Tag metadata so the plugin never loses track of type and rarity
+            // Apply Custom Texture Base64 based on Pet Type
+            setSkullTexture(meta, getTextureUrl(type));
+
             NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_type");
             NamespacedKey rarityKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_rarity");
             meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, type);
@@ -254,10 +261,39 @@ public class PetGui {
             lore.add("§8§l» §7" + rarity + " Pet");
 
             meta.setLore(lore);
-            meta.setMaxStackSize(1);
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static void setSkullTexture(SkullMeta skullMeta, String base64Texture) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+        profile.getProperties().put("textures", new Property("textures", base64Texture));
+        try {
+            Field profileField = skullMeta.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            profileField.set(skullMeta, profile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String getTextureUrl(String type) {
+        return switch (type.toLowerCase()) {
+            case "wolf" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTgzNzg1YTE3MmFjMTA2YTI2YzNmMWVkZmY1NzgxMzY4NWI2MjcxNTllNzkzY2NhMzkzYjJhN2ViMzVlOCJ9fX0=";
+            case "golem" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTRiMGRlMzg3ZDhjOWQ0MWUxOWU1M2Q0NmY2MTczODU4OTI1ZDllZGRmMjQ0OGUzZmZiYWU5ZTI1YTNmZjM2In19fQ==";
+            case "villager" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzNmN2NhNDU3ZDlmNDQ0NTk3ZTdkYzNmYTUxZmY5ZWQ5NzcwYjJiMGQ2MzNmNTc1YjljZjM2MTQ2ODNkNDkyMiJ9fX0=";
+            case "witch" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmM1MTU2MmVjMjgyNTg1NmMxODg0YWNkZDhlNjQyMWVjMmQyNzU0NTY2MzA3YjhlMTdhOGQ0M2FkNmY0NWMifX19";
+            case "dragon" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjI3MzhlOGI5Nzc1ZmNhMWU4ZDlhNTdmMTAxYTQ3OTY4OWViZDE2OTE3ZTM3Y2JhZjk3NWVlZjgyYmEwNjliMiJ9fX0=";
+            case "blaze" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjg0ODMzMzljYTczMWY0ZGMxZWI0NDdjZTA5ZjgzOTU4Y2Y0Yzg5MWQyZThjZWVhOTdjOGU4NDU5MmQyZSJ9fX0=";
+            case "enderman" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTNkYmYyYjJhOWY4NzU3YWUzZThkZGM1NDY5OGM2MTQyODhiYWNkMjg0YzJmMjU5NjEwMTRkMzFiMjc4YSJ9fX0=";
+            case "zombie" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmZkMmU2ZGU4N2E3MmM5ZDRlMTgyOTliNDczNzJmNGNmOWJmNGJiNGU0NDNjMjNmZjEzODQ3NjUzZjY3ZiJ9fX0=";
+            case "totem" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTllMWQzYjU5OWM4NjM3ZmFhMGEwNmU0Nzk5ZTE1MmE3ZThkNTQ2M2Y3MGNlOGJiMzA2ZjUxNTRlODhlY2EifX19";
+            case "guardian" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGQ1YzRhYzQzOTU3MTU0OTQzMjgzNWYyNzM4ZjFlM2MxYTNmODQzMzhkYjlmODQyOTdjZTMzMWVkNzY3YjUifX19";
+            case "banker" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGM0NzJjNzEzY2E4YTQ3YjU2YThkZjg2NGE4ODk1M2FmYjhlMzEwODhkN2U4ODliMmI4YWU3MTBiYmVmMDY3In19fQ==";
+            case "skeleton" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2FiYjg0ZGU0MTZkZWRlZDg3Yzk0YzA2YmY3N2Q1ZjE1NTk2YTc2MmFiMWQ5MTdmMGMyMjQxMmJkZjViZjgifX19";
+            default -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTllMWQzYjU5OWM4NjM3ZmFhMGEwNmU0Nzk5ZTE1MmE3ZThkNTQ2M2Y3MGNlOGJiMzA2ZjUxNTRlODhlY2EifX19";
+        };
     }
 
     public static String getPetFormattedName(String type, String rarity) {
@@ -306,4 +342,4 @@ public class PetGui {
         }
         return item;
     }
-    }
+            }
