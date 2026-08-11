@@ -14,7 +14,6 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -162,7 +161,7 @@ public class PetGui {
             String formattedName = getPetFormattedName(type, rarity);
             meta.setDisplayName(formattedName);
             
-            setSkullTextureFromUrl(meta, getTextureSkinUrl(type));
+            setSkullTextureBase64(meta, getTextureBase64(type));
 
             NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_type");
             NamespacedKey rarityKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_rarity");
@@ -265,28 +264,40 @@ public class PetGui {
         return item;
     }
 
-    private static void setSkullTextureFromUrl(SkullMeta skullMeta, String skinUrl) {
+    private static void setSkullTextureBase64(SkullMeta skullMeta, String base64Texture) {
         PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
-        byte[] encodedData = Base64.getEncoder().encode(String.format("{\"textures\":{\"SKIN\":{\"url\":\"%s\"}}}", skinUrl).getBytes());
-        profile.setProperty(new ProfileProperty("textures", new String(encodedData)));
+        profile.setProperty(new ProfileProperty("textures", base64Texture));
         skullMeta.setPlayerProfile(profile);
     }
 
-    private static String getTextureSkinUrl(String type) {
+    private static String getTextureBase64(String type) {
         return switch (type.toLowerCase()) {
-            case "wolf" -> "http://textures.minecraft.net/texture/e83785a172ac106a26c3f1edff57813685b627159e793cca393b2a7eb35e8";
-            case "golem" -> "http://textures.minecraft.net/texture/14b0de387d8c9d41e19e53d46f6173858925d9eddf2448e3ffbae9e25a3ff36";
-            case "villager" -> "http://textures.minecraft.net/texture/c3f7ca457d9f444597e7dc3fa51ff9ed9770b2b0d633f575b9cf3614683d4922";
-            case "witch" -> "http://textures.minecraft.net/texture/bc51562ec2825856c1884acdd86421ec2d2754566307b8e17a8d43ad6f45c";
-            case "dragon" -> "http://textures.minecraft.net/texture/62738e8b9775fca1e8d9a57f101a479689ebd16917e37cbaf975eef82ba069b2";
-            case "blaze" -> "http://textures.minecraft.net/texture/68483339ca731f4dc1eb447ce09f83958cf4c891d2e8ceea97c8e84592d2e";
-            case "enderman" -> "http://textures.minecraft.net/texture/a3dbf2b2a9f8757ae3e8ddc54698c614288bacd284c2f25961014d31b278a";
-            case "zombie" -> "http://textures.minecraft.net/texture/ffd2e6de87a72c9d4e18299b47372f4cf9bf4bb4e443c23ff13847653f67f";
-            case "totem" -> "http://textures.minecraft.net/texture/19e1d3b599c8637faa0a06e4799e152a7e8d5463f70ce8bb306f5154e88eca";
-            case "guardian" -> "http://textures.minecraft.net/texture/8d5c4ac439571549432835f2738f1e3c1a3f84338db9f84297ce331ed767b5";
-            case "banker" -> "http://textures.minecraft.net/texture/4c472c713ca8a47b56a8df864a88953afb8e1088d7e889b2b8ae710bbef067";
-            case "skeleton" -> "http://textures.minecraft.net/texture/cabb84de416deded87c94c06bf77d5f15596a762ab1d917f0c22412bend5bf8";
-            default -> "http://textures.minecraft.net/texture/19e1d3b599c8637faa0a06e4799e152a7e8d5463f70ce8bb306f5154e88eca";
+            // Wolf Head Texture
+            case "wolf" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTgzNzg1YTE3MmFjMTBhMjZjM2YxZWRmZjU3ODEzNjg1YjYyNzE1OWU3OTNjY2EzOTNiMmE3ZWIzNWU4In19fQ==";
+            // Iron Golem Head Texture
+            case "golem" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTRiMGRlMzg3ZGM5ZDQxZTE5ZTUzZDQ2ZjYxNzM4NTg5MjVkOWVkZGYyNDQ4ZTNmYmFlOWUyNWEzZmYzNiJ9fX0=";
+            // Villager Head Texture
+            case "villager" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzNmN2NhNDU3ZDlmNDQ0NTk3ZTdkYzNmYTUxZmY5ZWQ5NzcwYjJiMGQ2MzNmNTc1YjljZjM2MTQ2ODNkNDkyMiJ9fX0=";
+            // Witch Head Texture
+            case "witch" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmM1MTU2MmVjMjgyNTg1NmMxODg0YWNkZDg2NDIxZWMyZDI3NTQ1NjYzMDdiOGUxN2E4ZDQzYWQ2ZjQ1YyJ9fX0=";
+            // Dragon Head Texture
+            case "dragon" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjI3MzhlOGI5Nzc1ZmNhMWU4ZDlhNTdmMTAxYTQ3OTY4OWViZDE2OTE3ZTM3Y2JhZjk3NWVlZjgyYmEwNjliMiJ9fX0=";
+            // Blaze Head Texture
+            case "blaze" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjg0ODMzMzljYTczMWY0ZGMxZWI0NDdjZTA5ZjgzOTU4Y2Y0Yzg5MWQyZThjZWVhOTdjOGU4NDU5MmQyZSJ9fX0=";
+            // Enderman Head Texture
+            case "enderman" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTNkYmYyYjJhOWY4NzU3YWUzZThkZGM1NDY5OGM2MTQyODhiYWNkMjg0YzJmMjU5NjEwMTRkMzFiMjc4YSJ9fX0=";
+            // Zombie Head Texture
+            case "zombie" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmZkMmU2ZGU4NGE3MmM5ZDRlMTgyOTliNDczNzJmNGNmOWJmNGJiNGU0NDNjMjNmZjEzODQ3NjUzZjY3ZiJ9fX0=";
+            // Totem Texture
+            case "totem" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTllMWQzYjU5OWM4NjM3ZmFhMGEwNmU0Nzk5ZTE1MmE3ZThkNTQ2M2Y3MGNlOGJiMzA2ZjUxNTRlODhlY2EifX19";
+            // Guardian Head Texture
+            case "guardian" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGQ1YzRhYzQzOTU3MTU0OTQzMjgzNWYyNzM4ZjFlM2MxYTNmODQzMzhkYjlmODQyOTdjZTMzMWVkNzY3YjUifX19";
+            // Banker / Piglin Head Texture
+            case "banker" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGM0NzJjNzEzY2E4YTQ3YjU2YThkZjg2NGE4ODk1M2FmYjFlMTA4OGQ3ZTg4OWIyYjhhZTcxMGJiZWYwNjcifX19";
+            // Skeleton Head Texture
+            case "skeleton" -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2FiYjg0ZGU0MTZkZWRlZDg3Yzk0YzA2YmY3N2Q1ZjE1NTk2YTc2MmFiMWQ5MTdmMGMyMjQxMmJlbmQ1YmY4In19fQ==";
+            // Default Fallback
+            default -> "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTllMWQzYjU5OWM4NjM3ZmFhMGEwNmU0Nzk5ZTE1MmE3ZThkNTQ2M2Y3MGNlOGJiMzA2ZjUxNTRlODhlY2EifX19";
         };
     }
 
@@ -336,4 +347,4 @@ public class PetGui {
         }
         return item;
     }
-            }
+                                               }
