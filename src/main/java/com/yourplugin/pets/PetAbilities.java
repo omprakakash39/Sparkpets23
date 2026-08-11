@@ -3,6 +3,7 @@ package com.yourplugin.pets;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,8 +13,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,12 +28,51 @@ import java.util.UUID;
 public class PetAbilities implements Listener {
 
     private final PetsPlugin plugin;
-    public static final HashMap<UUID, String> activePets = new HashMap<>();
+    public static final HashMap<UUID, String> activePetTypes = new HashMap<>();
+    public static final HashMap<UUID, String> activePetRarities = new HashMap<>();
     public static final HashMap<UUID, ItemStack> activePetItems = new HashMap<>();
     private final Random random = new Random();
 
     public PetAbilities(PetsPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        NamespacedKey typeKey = new NamespacedKey(plugin, "active_pet_type");
+        NamespacedKey rarityKey = new NamespacedKey(plugin, "active_pet_rarity");
+
+        if (player.getPersistentDataContainer().has(typeKey, PersistentDataType.STRING)) {
+            String type = player.getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
+            String rarity = player.getPersistentDataContainer().get(rarityKey, PersistentDataType.STRING);
+            
+            activePetTypes.put(player.getUniqueId(), type);
+            activePetRarities.put(player.getUniqueId(), rarity);
+            activePetItems.put(player.getUniqueId(), PetGui.createPetHead(type, rarity));
+        }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        
+        // Save active pet state to player data container so it persists across relogs
+        NamespacedKey typeKey = new NamespacedKey(plugin, "active_pet_type");
+        NamespacedKey rarityKey = new NamespacedKey(plugin, "active_pet_rarity");
+
+        if (activePetTypes.containsKey(uuid)) {
+            player.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, activePetTypes.get(uuid));
+            player.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, activePetRarities.get(uuid));
+        } else {
+            player.getPersistentDataContainer().remove(typeKey);
+            player.getPersistentDataContainer().remove(rarityKey);
+        }
+
+        activePetTypes.remove(uuid);
+        activePetRarities.remove(uuid);
+        activePetItems.remove(uuid);
     }
 
     @EventHandler
@@ -57,25 +100,15 @@ public class PetAbilities implements Listener {
             }
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
-            
-            // If clicking inside the player's own inventory while fusion menu is open
-            if (slot >= 36) {
-                return; // Allow normal inventory interaction below
-            }
+            if (slot >= 36) return;
 
-            // Allowed ingredient slots: 10 to 16
-            if (slot >= 10 && slot <= 16) {
-                return; // Allow placing/taking pets in input slots
-            }
+            if (slot >= 10 && slot <= 16) return;
 
-            // Confirm Fusion button slot (31)
             if (slot == 31) {
                 event.setCancelled(true);
                 processFusion(player, event.getInventory());
                 return;
             }
-
-            // Block everything else in the GUI (borders, panes, etc.)
             event.setCancelled(true);
         }
     }
@@ -83,7 +116,6 @@ public class PetAbilities implements Listener {
     private void processFusion(Player player, Inventory inv) {
         List<ItemStack> placedPets = new ArrayList<>();
 
-        // Collect all valid pet heads placed in slots 10 to 16
         for (int slot = 10; slot <= 16; slot++) {
             ItemStack item = inv.getItem(slot);
             if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta()) {
@@ -96,14 +128,12 @@ public class PetAbilities implements Listener {
             return;
         }
 
-        // Validate that all placed pets are of the EXACT same type and rarity
         String firstType = null;
         String firstRarity = null;
 
         for (ItemStack pet : placedPets) {
-            String name = pet.getItemMeta().getDisplayName();
-            String type = getPetTypeFromDisplay(name);
-            String rarity = getPetRarityFromLore(pet);
+            String type = getPetTypeFromItem(pet);
+            String rarity = getPetRarityFromItem(pet);
 
             if (type == null || rarity == null) {
                 returnItemsToPlayer(player, placedPets, inv);
@@ -125,12 +155,8 @@ public class PetAbilities implements Listener {
         }
 
         int count = placedPets.size();
-        String targetRarity = null;
+        String targetRarity;
 
-        // Fusion Rules check:
-        // 4 Common -> 1 Rare
-        // 3 Rare -> 1 Epic
-        // 2 Epic -> 1 Shiny
         if (firstRarity.equalsIgnoreCase("Common") && count == 4) {
             targetRarity = "Rare";
         } else if (firstRarity.equalsIgnoreCase("Rare") && count == 3) {
@@ -138,7 +164,6 @@ public class PetAbilities implements Listener {
         } else if (firstRarity.equalsIgnoreCase("Epic") && count == 2) {
             targetRarity = "Shiny";
         } else {
-            // Fusion failed due to wrong count/requirement mismatch
             returnItemsToPlayer(player, placedPets, inv);
             player.sendMessage(ChatColor.RED + "Fusion Failed! Incorrect amount of pets for " + firstRarity + " tier.");
             player.sendMessage(ChatColor.YELLOW + "Required: 4 Common->Rare, 3 Rare->Epic, 2 Epic->Shiny.");
@@ -146,12 +171,10 @@ public class PetAbilities implements Listener {
             return;
         }
 
-        // Clear ingredients from inventory slots so they aren't duplicated
         for (int slot = 10; slot <= 16; slot++) {
             inv.setItem(slot, null);
         }
 
-        // Success: Give upgraded pet
         ItemStack upgradedPet = PetGui.createPetHead(firstType, targetRarity);
         player.getInventory().addItem(upgradedPet);
         
@@ -175,7 +198,6 @@ public class PetAbilities implements Listener {
             Player player = (Player) event.getPlayer();
             Inventory inv = event.getInventory();
             
-            // Return any remaining items in fusion slots back to player when they close GUI
             for (int slot = 10; slot <= 16; slot++) {
                 ItemStack item = inv.getItem(slot);
                 if (item != null && item.getType() != Material.AIR) {
@@ -186,20 +208,33 @@ public class PetAbilities implements Listener {
         }
     }
 
-    private String getPetTypeFromDisplay(String displayName) {
-        String stripped = ChatColor.stripColor(displayName);
+    private String getPetTypeFromItem(ItemStack item) {
+        if (!item.hasItemMeta()) return null;
+        NamespacedKey key = new NamespacedKey(plugin, "pet_type");
+        if (item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        }
+        // Fallback parsing from display name if PDC is missing
+        String stripped = ChatColor.stripColor(item.getItemMeta().getDisplayName());
         if (stripped != null && stripped.endsWith(" Pet")) {
             return stripped.replace(" Pet", "").trim();
         }
         return null;
     }
 
-    private String getPetRarityFromLore(ItemStack item) {
-        if (!item.hasItemMeta() || !item.getItemMeta().hasLore()) return null;
-        for (String line : item.getItemMeta().getLore()) {
-            String stripped = ChatColor.stripColor(line);
-            if (stripped != null && stripped.startsWith("Rarity: ")) {
-                return stripped.replace("Rarity: ", "").trim();
+    private String getPetRarityFromItem(ItemStack item) {
+        if (!item.hasItemMeta()) return null;
+        NamespacedKey key = new NamespacedKey(plugin, "pet_rarity");
+        if (item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        }
+        // Fallback parsing from lore
+        if (item.getItemMeta().hasLore()) {
+            for (String line : item.getItemMeta().getLore()) {
+                String stripped = ChatColor.stripColor(line);
+                if (stripped != null && stripped.startsWith("Rarity: ")) {
+                    return stripped.replace("Rarity: ", "").trim();
+                }
             }
         }
         return "Common";
@@ -233,33 +268,46 @@ public class PetAbilities implements Listener {
                     return;
                 }
 
-                if (clickedItem.getType() == Material.PLAYER_HEAD) {
+                if (clickedItem.getType() == Material.PLAYER_HEAD && getPetTypeFromItem(clickedItem) != null) {
                     event.setCancelled(true);
 
                     if (activePetItems.containsKey(player.getUniqueId())) {
                         player.getInventory().addItem(activePetItems.get(player.getUniqueId()));
                     }
 
-                    activePets.put(player.getUniqueId(), name);
+                    String type = getPetTypeFromItem(clickedItem);
+                    String rarity = getPetRarityFromItem(clickedItem);
+
+                    activePetTypes.put(player.getUniqueId(), type);
+                    activePetRarities.put(player.getUniqueId(), rarity);
                     activePetItems.put(player.getUniqueId(), clickedItem.clone());
                     
                     clickedItem.setAmount(clickedItem.getAmount() - 1);
                     
                     player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.0f);
-                    player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + name);
+                    player.sendMessage(ChatColor.GREEN + "Successfully activated pet: " + clickedItem.getItemMeta().getDisplayName());
                 }
             }
         }
     }
 
     public static void deactivatePet(Player player) {
-        if (activePets.containsKey(player.getUniqueId())) {
-            ItemStack petItem = activePetItems.get(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+        if (activePetTypes.containsKey(uuid)) {
+            ItemStack petItem = activePetItems.get(uuid);
             if (petItem != null) {
                 player.getInventory().addItem(petItem);
             }
-            activePets.remove(player.getUniqueId());
-            activePetItems.remove(player.getUniqueId());
+            activePetTypes.remove(uuid);
+            activePetRarities.remove(uuid);
+            activePetItems.remove(uuid);
+            
+            // Clear persistent data
+            NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "active_pet_type");
+            NamespacedKey rarityKey = new NamespacedKey(PetsPlugin.getInstance(), "active_pet_rarity");
+            player.getPersistentDataContainer().remove(typeKey);
+            player.getPersistentDataContainer().remove(rarityKey);
+
             player.sendMessage(ChatColor.RED + "Deactivated your active pet and returned it to your inventory.");
         } else {
             player.sendMessage(ChatColor.YELLOW + "You don't have any active pet equipped.");
@@ -269,28 +317,28 @@ public class PetAbilities implements Listener {
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player attacker) {
-            String pet = activePets.get(attacker.getUniqueId());
-            if (pet != null) {
-                double multiplier = 1.05;
-                if (pet.contains("Shiny")) multiplier = 1.20;
-                else if (pet.contains("Epic")) multiplier = 1.15;
-                else if (pet.contains("Rare")) multiplier = 1.10;
+            String type = activePetTypes.get(attacker.getUniqueId());
+            String rarity = activePetRarities.get(attacker.getUniqueId());
+            
+            if (type != null && rarity != null) {
+                double percentage = PetGui.getAbilityValue(rarity) / 100.0;
+                double multiplier = 1.0 + percentage;
 
-                if (pet.contains("Wolf") || pet.contains("Dragon") || pet.contains("Skeleton") || pet.contains("Blaze")) {
+                if (type.equalsIgnoreCase("Wolf") || type.equalsIgnoreCase("Dragon") || type.equalsIgnoreCase("Skeleton") || type.equalsIgnoreCase("Blaze")) {
                     event.setDamage(event.getDamage() * multiplier);
                 }
             }
         }
 
         if (event.getEntity() instanceof Player victim) {
-            String pet = activePets.get(victim.getUniqueId());
-            if (pet != null) {
-                double reductionMultiplier = 0.95;
-                if (pet.contains("Shiny")) reductionMultiplier = 0.80;
-                else if (pet.contains("Epic")) reductionMultiplier = 0.85;
-                else if (pet.contains("Rare")) reductionMultiplier = 0.90;
+            String type = activePetTypes.get(victim.getUniqueId());
+            String rarity = activePetRarities.get(victim.getUniqueId());
 
-                if (pet.contains("Golem") || pet.contains("Enderman") || pet.contains("Guardian")) {
+            if (type != null && rarity != null) {
+                double percentage = PetGui.getAbilityValue(rarity) / 100.0;
+                double reductionMultiplier = 1.0 - percentage;
+
+                if (type.equalsIgnoreCase("Golem") || type.equalsIgnoreCase("Enderman") || type.equalsIgnoreCase("Guardian")) {
                     event.setDamage(event.getDamage() * reductionMultiplier);
                 }
             }
