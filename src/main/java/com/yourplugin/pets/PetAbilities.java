@@ -58,13 +58,17 @@ public class PetAbilities implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         
-        // Save active pet state to player data container so it persists across relogs
         NamespacedKey typeKey = new NamespacedKey(plugin, "active_pet_type");
         NamespacedKey rarityKey = new NamespacedKey(plugin, "active_pet_rarity");
 
         if (activePetTypes.containsKey(uuid)) {
             player.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, activePetTypes.get(uuid));
             player.getPersistentDataContainer().set(rarityKey, PersistentDataType.STRING, activePetRarities.get(uuid));
+            
+            ItemStack petItem = activePetItems.get(uuid);
+            if (petItem != null) {
+                player.getInventory().addItem(petItem);
+            }
         } else {
             player.getPersistentDataContainer().remove(typeKey);
             player.getPersistentDataContainer().remove(rarityKey);
@@ -101,7 +105,6 @@ public class PetAbilities implements Listener {
         } else if (title.contains("Pet Fusion")) {
             int slot = event.getRawSlot();
             if (slot >= 36) return;
-
             if (slot >= 10 && slot <= 16) return;
 
             if (slot == 31) {
@@ -214,7 +217,6 @@ public class PetAbilities implements Listener {
         if (item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
         }
-        // Fallback parsing from display name if PDC is missing
         String stripped = ChatColor.stripColor(item.getItemMeta().getDisplayName());
         if (stripped != null && stripped.endsWith(" Pet")) {
             return stripped.replace(" Pet", "").trim();
@@ -228,7 +230,6 @@ public class PetAbilities implements Listener {
         if (item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
         }
-        // Fallback parsing from lore
         if (item.getItemMeta().hasLore()) {
             for (String line : item.getItemMeta().getLore()) {
                 String stripped = ChatColor.stripColor(line);
@@ -302,7 +303,6 @@ public class PetAbilities implements Listener {
             activePetRarities.remove(uuid);
             activePetItems.remove(uuid);
             
-            // Clear persistent data
             NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "active_pet_type");
             NamespacedKey rarityKey = new NamespacedKey(PetsPlugin.getInstance(), "active_pet_rarity");
             player.getPersistentDataContainer().remove(typeKey);
@@ -321,8 +321,8 @@ public class PetAbilities implements Listener {
             String rarity = activePetRarities.get(attacker.getUniqueId());
             
             if (type != null && rarity != null) {
-                double percentage = PetGui.getAbilityValue(rarity) / 100.0;
-                double multiplier = 1.0 + percentage;
+                double percentage = PetGui.getAbilityValue(rarity);
+                double multiplier = 1.0 + (percentage / 100.0);
 
                 if (type.equalsIgnoreCase("Wolf") || type.equalsIgnoreCase("Dragon") || type.equalsIgnoreCase("Skeleton") || type.equalsIgnoreCase("Blaze")) {
                     event.setDamage(event.getDamage() * multiplier);
@@ -335,8 +335,8 @@ public class PetAbilities implements Listener {
             String rarity = activePetRarities.get(victim.getUniqueId());
 
             if (type != null && rarity != null) {
-                double percentage = PetGui.getAbilityValue(rarity) / 100.0;
-                double reductionMultiplier = 1.0 - percentage;
+                double percentage = PetGui.getAbilityValue(rarity);
+                double reductionMultiplier = 1.0 - (percentage / 100.0);
 
                 if (type.equalsIgnoreCase("Golem") || type.equalsIgnoreCase("Enderman") || type.equalsIgnoreCase("Guardian")) {
                     event.setDamage(event.getDamage() * reductionMultiplier);
@@ -344,4 +344,4 @@ public class PetAbilities implements Listener {
             }
         }
     }
-    }
+            }
