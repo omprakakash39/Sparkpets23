@@ -8,8 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PetsPlugin extends JavaPlugin {
 
+    private static PetsPlugin instance;
+
     @Override
     public void onEnable() {
+        instance = this;
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(new PetAbilities(this), this);
         getLogger().info("PetsPlugin has been enabled successfully!");
@@ -18,6 +21,10 @@ public final class PetsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         getLogger().info("PetsPlugin has been disabled.");
+    }
+
+    public static PetsPlugin getInstance() {
+        return instance;
     }
 
     @Override
