@@ -163,7 +163,6 @@ public class PetGui {
             String formattedName = getPetFormattedName(type, rarity);
             meta.setDisplayName(formattedName);
             
-            // Apply Modern Paper Profile Texture URL directly
             setSkullTextureFromUrl(meta, getTextureSkinUrl(type));
 
             NamespacedKey typeKey = new NamespacedKey(PetsPlugin.getInstance(), "pet_type");
@@ -268,7 +267,7 @@ public class PetGui {
     }
 
     private static void setSkullTextureFromUrl(SkullMeta skullMeta, String skinUrl) {
-        PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
+        org.bukkit.profile.PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
         PlayerTextures textures = profile.getTextures();
         try {
             textures.setSkin(new URL(skinUrl));
@@ -343,4 +342,4 @@ public class PetGui {
         }
         return item;
     }
-                }
+}
